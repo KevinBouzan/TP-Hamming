@@ -13,7 +13,7 @@ public class Main {
 
         master.displayDistances();
 
-        master.dispatch(2);
+        master.dispatch(3);
 //        master.dispatch();
 
         System.out.println(master.toString());
@@ -32,13 +32,13 @@ public class Main {
         master.addEntry(new Entry(0, 2, 2, 1));
         // 6
         master.addEntry(new Entry(0, 1, 1, 1));
-// 7
+        // 7
         master.addEntry(new Entry(1, 2, 2, 1));
-// 8
+        // 8
         master.addEntry(new Entry(1, 1, 1, 0));
-// 9
+        // 9
         master.addEntry(new Entry(1, 1, 1, 1));
-// 10
+        // 10
         master.addEntry(new Entry(1, 2, 1, 1));
     }
 

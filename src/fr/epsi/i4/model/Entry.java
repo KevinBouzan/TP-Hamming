@@ -161,7 +161,7 @@ public class Entry {
             if (minDistance.getDistance() < 2) {
                 clusterDataRemove = clusterOfList;
                 result = minDistance.getEntry();
-                if(clusterDataRemove != clusterOfList){
+                if (clusterDataRemove != clusterOfList) {
                     count++;
                 }
             }
@@ -174,24 +174,54 @@ public class Entry {
         }
     }
 
+//    public Entry getEntryToSwitch(List<Cluster> clusters) {
+//        int min = 0;
+//        int minOfMax = 10000;
+//        Entry result = null;
+//        DistanceEntry resMin;
+//        DistanceEntry resMax;
+//        Cluster clusterDataRemove = null;
+//        for (Cluster clusterOfList : clusters) {
+//            resMin = getMinimumDistanceWithCluster(clusterOfList);
+//            resMax = getMaximumDistanceWithCluster(clusterOfList);
+//            if (Math.abs(resMin.getDistance() - resMax.getDistance()) >= min && resMax.getDistance() < minOfMax) {
+//                min = Math.abs(resMin.getDistance() - resMax.getDistance());
+//                minOfMax = resMax.getDistance();
+//                result = resMax.getEntry();
+//                clusterDataRemove = clusterOfList;
+//            }
+//        }
+//        clusterDataRemove.getData().remove(result);
+//        return result;
+//    }
     public Entry getEntryToSwitch(List<Cluster> clusters) {
-        int min = 0;
-        int minOfMax = 10000;
         Entry result = null;
-        DistanceEntry resMin;
-        DistanceEntry resMax;
+        float moy = 0;
+        int ecart = 0;
+        int ecartTemp = 0;
+        DistanceEntry resMin = null;
+        DistanceEntry resMax = null;
         Cluster clusterDataRemove = null;
         for (Cluster clusterOfList : clusters) {
-            resMin = getMinimumDistanceWithCluster(clusterOfList);
-            resMax = getMaximumDistanceWithCluster(clusterOfList);
-            if (Math.abs(resMin.getDistance() - resMax.getDistance()) >= min && resMax.getDistance() < minOfMax) {
-                min = Math.abs(resMin.getDistance() - resMax.getDistance());
-                minOfMax = resMax.getDistance();
-                result = resMax.getEntry();
+            ecartTemp = getMaximumDistanceWithCluster(clusterOfList).getDistance() - getMinimumDistanceWithCluster(clusterOfList).getDistance();
+            if (ecartTemp >= ecart) {
+                resMin = getMinimumDistanceWithCluster(clusterOfList);
+                resMax = getMaximumDistanceWithCluster(clusterOfList);
                 clusterDataRemove = clusterOfList;
+                ecart = ecartTemp;
+                moy = 0;
+                for (Entry entry : clusterOfList.getData()) {
+                    moy += calculateDistance(entry);
+                }
+                moy /= clusterOfList.getData().size();
             }
         }
-        clusterDataRemove.getData().remove(result);
-        return result;
+        if((resMax.getDistance() - Math.round(moy)) > (resMin.getDistance() - Math.round(moy))){
+            clusterDataRemove.getData().remove(resMax.getEntry());
+            return resMax.getEntry();
+        } else {
+            clusterDataRemove.getData().remove(resMin.getEntry());
+            return resMin.getEntry();
+        }
     }
 }
