@@ -1,12 +1,22 @@
 package fr.epsi.i4.model;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Classe Entry qui represente une ligne de données
+ * @author kbouzan
+ */
 public class Entry {
 
+    /**
+     * id de la ligne de données
+     */
     private int id;
+    
+    /**
+     * nextId static afin d'auto-increment l'id
+     */
     private static int nextId = 1;
 
     public int couleur;
@@ -74,6 +84,11 @@ public class Entry {
                 + '}';
     }
 
+    /**
+     * Calcule la distance entre l'entry actuelle et l'entry passé en paramètre
+     * @param entry
+     * @return distance
+     */
     public int calculateDistance(Entry entry) {
         int distance = 0;
 
@@ -90,6 +105,11 @@ public class Entry {
         return distance;
     }
 
+    /**
+     * Calcule la distace maximale avec le cluster passer en paramètre
+     * @param cluster
+     * @return la distance maximale et l'entry qui correspond à cette distance 
+     */
     public DistanceEntry getMaximumDistanceWithCluster(Cluster cluster) {
         int distance = 0;
         int newDistance = 0;
@@ -105,6 +125,11 @@ public class Entry {
         return new DistanceEntry(distance, maxEntry);
     }
 
+    /**
+     * Calcule la distace minimale avec le cluster passer en paramètre
+     * @param cluster
+     * @return la distance minimale et l'entry qui correspond à cette distance 
+     */
     public DistanceEntry getMinimumDistanceWithCluster(Cluster cluster) {
         int distance = 1000000;
         int newDistance = 0;
@@ -120,6 +145,12 @@ public class Entry {
         return new DistanceEntry(distance, minEntry);
     }
 
+    /**
+     * Verifie si l'entry doit être inseré dans le cluster passé en paramètre
+     * @param cluster
+     * @param clusters
+     * @return l'entry si ok sinon null
+     */
     public Entry checkDistanceWithClusters(Cluster cluster, List<Cluster> clusters) {
         int distanceMin = 1000000;
 
@@ -136,66 +167,17 @@ public class Entry {
         if (distanceMin >= distanceMax.getDistance()) {
             return this;
         } else {
-//            return distanceMax.getEntry();
             return null;
         }
     }
 
-    public List<Entry> getEntryWithDistanceOne(List<Entry> data) {
-        List<Entry> result = new ArrayList<>();
-        for (Entry entry : data) {
-            if (this.calculateDistance(entry) < 2) {
-                result.add(entry);
-            }
-        }
-        return result;
-    }
-
-    public Entry checkIfCloseTo(List<Cluster> clusters) {
-        Entry result = null;
-        DistanceEntry minDistance = null;
-        Cluster clusterDataRemove = null;
-        int count = 0;
-        for (Cluster clusterOfList : clusters) {
-            minDistance = getMinimumDistanceWithCluster(clusterOfList);
-            if (minDistance.getDistance() < 2) {
-                clusterDataRemove = clusterOfList;
-                result = minDistance.getEntry();
-                if (clusterDataRemove != clusterOfList) {
-                    count++;
-                }
-            }
-        }
-        if (result != null && count < 2) {
-            clusterDataRemove.getData().add(this);
-            return this;
-        } else {
-            return null;
-        }
-    }
-
-//    public Entry getEntryToSwitch(List<Cluster> clusters) {
-//        int min = 0;
-//        int minOfMax = 10000;
-//        Entry result = null;
-//        DistanceEntry resMin;
-//        DistanceEntry resMax;
-//        Cluster clusterDataRemove = null;
-//        for (Cluster clusterOfList : clusters) {
-//            resMin = getMinimumDistanceWithCluster(clusterOfList);
-//            resMax = getMaximumDistanceWithCluster(clusterOfList);
-//            if (Math.abs(resMin.getDistance() - resMax.getDistance()) >= min && resMax.getDistance() < minOfMax) {
-//                min = Math.abs(resMin.getDistance() - resMax.getDistance());
-//                minOfMax = resMax.getDistance();
-//                result = resMax.getEntry();
-//                clusterDataRemove = clusterOfList;
-//            }
-//        }
-//        clusterDataRemove.getData().remove(result);
-//        return result;
-//    }
+    /**
+     * recupère l'entry qui gêne pour l'insertion de la données dans un cluster.
+     * Pour cela on calcule la moyenne ainsi que l'ecart entre le max et le min afin de choisir le bon élément à retirer du cluster
+     * @param clusters
+     * @return 
+     */
     public Entry getEntryToSwitch(List<Cluster> clusters) {
-        Entry result = null;
         float moy = 0;
         int ecart = 0;
         int ecartTemp = 0;
@@ -203,6 +185,9 @@ public class Entry {
         DistanceEntry resMax = null;
         Cluster clusterDataRemove = null;
         for (Cluster clusterOfList : clusters) {
+            
+            // Calcul de l'ecart type
+            // S'il est plus grand que celui enregistré on calcule sa moyenne
             ecartTemp = getMaximumDistanceWithCluster(clusterOfList).getDistance() - getMinimumDistanceWithCluster(clusterOfList).getDistance();
             if (ecartTemp >= ecart) {
                 resMin = getMinimumDistanceWithCluster(clusterOfList);
@@ -216,6 +201,9 @@ public class Entry {
                 moy /= clusterOfList.getData().size();
             }
         }
+        
+        // afin de savoir si c'est le maximum ou le minimum qui pose problème on soustrait la moyenne à ces deux valeur. La plus grande valeur est donc celle la plus eloigné de la moyenne et donc celle su'il faut retirer
+        // la moyenne est arrondi puisqu'il ne peut pas y avoir un demi attribut de difference.
         if((resMax.getDistance() - Math.round(moy)) > (resMin.getDistance() - Math.round(moy))){
             clusterDataRemove.getData().remove(resMax.getEntry());
             return resMax.getEntry();

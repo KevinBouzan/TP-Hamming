@@ -8,13 +8,13 @@ public class Main {
     public static void main(String[] args) {
         Master master = new Master();
 
-        generateData(master);
-//        generateDataBis(master);
+//        generateData(master);
+        generateDataBis(master);
 
         master.displayDistances();
 
-        master.dispatch(3);
-//        master.dispatch();
+//        master.dispatch(2);
+        master.dispatch();
 
         System.out.println(master.toString());
     }

@@ -1,10 +1,16 @@
 package fr.epsi.i4.model;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
+/**
+ * Classe Cluster qui represente un cluster de données
+ * @author kbouzan
+ */
 public class Cluster {
 
+    /**
+     * Liste des données du cluster
+     */
     private List<Entry> data;
 
     public Cluster() {
@@ -32,24 +38,8 @@ public class Cluster {
         }
         return null;
     }
-
-    public Entry removeEntry(int id) {
-        return data.remove(id);
-    }
-
+    
     public boolean isEmpty() {
         return data.isEmpty();
-    }
-
-    public int getMaximumDistance() {
-        int distance = 0;
-
-        for (int i = 0; i < data.size(); i++) {
-            for (int j = i + 1; j < data.size(); j++) {
-                distance = Math.max(distance, data.get(i).calculateDistance(data.get(j)));
-            }
-        }
-
-        return distance;
     }
 }
