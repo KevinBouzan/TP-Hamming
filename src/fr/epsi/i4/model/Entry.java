@@ -1,6 +1,6 @@
 package fr.epsi.i4.model;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,70 +19,40 @@ public class Entry {
      */
     private static int nextId = 1;
 
-    public int couleur;
-    public int noyaux;
-    public int flagelles;
-    public int membrane;
-
+    private List<Integer> params;
+    
     public Entry() {
         id = nextId;
         nextId++;
+        this.params = new ArrayList<>();
     }
-
-    public Entry(int couleur, int noyaux, int flagelles, int membrane) {
+    
+    public Entry(int... values){
         this();
-        this.couleur = couleur;
-        this.noyaux = noyaux;
-        this.flagelles = flagelles;
-        this.membrane = membrane;
+        this.params = new ArrayList<>();
+        for (int v : values) {
+            this.params.add(v);
+        }
     }
 
     public int getId() {
         return id;
     }
 
-    public int getCouleur() {
-        return couleur;
+    public List<Integer> getParams() {
+        return params;
     }
 
-    public void setCouleur(int couleur) {
-        this.couleur = couleur;
-    }
-
-    public int getNoyaux() {
-        return noyaux;
-    }
-
-    public void setNoyaux(int noyaux) {
-        this.noyaux = noyaux;
-    }
-
-    public int getFlagelles() {
-        return flagelles;
-    }
-
-    public void setFlagelles(int flagelles) {
-        this.flagelles = flagelles;
-    }
-
-    public int getMembrane() {
-        return membrane;
-    }
-
-    public void setMembrane(int membrane) {
-        this.membrane = membrane;
+    public void setParams(List<Integer> params) {
+        this.params = params;
     }
 
     @Override
     public String toString() {
-        return "Entry{"
-                + "id=" + id
-                + ", couleur=" + couleur
-                + ", noyaux=" + noyaux
-                + ", flagelles=" + flagelles
-                + ", membrane=" + membrane
-                + '}';
+        return "Entry{" + "id=" + id + ", params=" + params.toString() + '}';
     }
+
+    
 
     /**
      * Calcule la distance entre l'entry actuelle et l'entry passé en paramètre
@@ -91,15 +61,13 @@ public class Entry {
      */
     public int calculateDistance(Entry entry) {
         int distance = 0;
+        int i = 0;
 
-        try {
-            for (Field field : getClass().getFields()) {
-                if (!field.get(this).equals(field.get(entry))) {
-                    distance++;
-                }
+        while(i < entry.getParams().size()){
+            if(this.getParams().get(i) != entry.getParams().get(i)){
+                distance++;
             }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            i++;
         }
 
         return distance;

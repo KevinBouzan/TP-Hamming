@@ -73,7 +73,7 @@ public class Master {
 
         return clusters.get(0);
     }
-
+    
     public void displayDistances() {
         for (int i = 0; i < data.size(); i++) {
             for (int j = i + 1; j < data.size(); j++) {
@@ -215,4 +215,5 @@ public class Master {
         }
         return result;
     }
+    
 }
