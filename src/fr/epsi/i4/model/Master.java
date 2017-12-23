@@ -92,40 +92,75 @@ public class Master {
         int dist;
         int count = 0;
         int max = data.size();
+        List<Entry> listEntryOneDistance;
+        Cluster cluster = null;
         while (!data.isEmpty()) {
+            listEntryOneDistance = null;
             i = 0;
             dist = 0;
             trouve = false;
             entry = getFirstEntry();
-            if (getFirstEmptyCluster().isEmpty()) {
-                getFirstEmptyCluster().addEntry(entry);
-                data.remove(entry);
+            cluster = getFirstEmptyCluster();
+            if (cluster.isEmpty()) {
+                if (entry.checkIfCloseTo(clusters) == null || data.size() < 2) {
+                    cluster.addEntry(entry);
+                    data.remove(entry);
+                    listEntryOneDistance = entry.getEntryWithDistanceOne(data);
+                    for (Entry entryOfList : listEntryOneDistance) {
+                        cluster.addEntry(entryOfList);
+                        data.remove(entryOfList);
+                    }
+                } else {
+                    data.remove(entry);
+                }
             } else {
                 while (i < clusters.size() && !trouve) {
                     entryResult = entry.checkDistanceWithClusters(clusters.get(i), clusters);
                     if (entryResult == entry) {
                         clusters.get(i).addEntry(entry);
                         data.remove(entry);
+//                        listEntryOneDistance = entry.getEntryWithDistanceOne(data);
+//                        for (Entry entryOfList : listEntryOneDistance) {
+//                            clusters.get(i).addEntry(entryOfList);
+//                            data.remove(entryOfList);
+//                        }
                         trouve = true;
-                    } else {
-                        if (entry.calculateDistance(entryResult) > dist) {
-                            dist = entry.calculateDistance(entryResult);
-                            entryMax = entryResult;
-                            clusterMax = clusters.get(i);
-                        }
+//                    } else {
+//                        if (entry.calculateDistance(entryResult) > dist) {
+//                            dist = entry.calculateDistance(entryResult);
+//                            entryMax = entryResult;
+//                            clusterMax = clusters.get(i);
+//                        }
                     }
                     i++;
                 }
                 if (!trouve) {
-                    data.add(entryMax);
-                    clusterMax.getData().remove(entryMax);
-                    clusterMax.addEntry(entry);
-                    data.remove(entry);
-                    count++;
+                    if (data.size() > 1) {
+                        entryMax = entry.getEntryToSwitch(clusters);
+//                    data.add(entryMax);
+//                    clusterMax.getData().remove(entryMax);
+//                    clusterMax.addEntry(entry);
+//                    data.remove(entry);
+
+//                    data.remove(entry);
+                        data.add(entryMax);
+                        data.remove(entry);
+                        data.add(entry);
+                        count++;
+                    } else {
+                        getFirstEmptyCluster().addEntry(data.get(0));
+                        data.remove(0);
+                    }
                 }
                 if (count == max) {
                     System.out.println("suppression de la données " + data.get(data.size() - 1).toString() + " car il n'est pas possible de l'inserer dans un des " + n + " clusters");
+                    getFirstEmptyCluster().addEntry(data.get(data.size() - 1));
                     data.remove(data.size() - 1);
+                    count = 0;
+//                    data.add(entryMax);
+//                    clusterMax.getData().remove(entryMax);
+//                    clusterMax.addEntry(entry);
+//                    data.remove(entry);
                 }
             }
         }
@@ -180,7 +215,7 @@ public class Master {
                 }
 //                if (count == max) {
 //                    generateNewCluster(entryMax);
-                    
+
 //                    clusters.add(new Cluster());
 //                    getFirstEmptyCluster().addEntry(entryMax);
 //                    data.remove(entryMax);
@@ -223,5 +258,14 @@ public class Master {
             }
         }
 
+    }
+
+    public void addManyEntries(Entry entry, Cluster cluster) {
+        List<Entry> listEntryOneDistance = entry.getEntryWithDistanceOne(data);
+        for (Entry entryOfList : listEntryOneDistance) {
+            cluster.addEntry(entryOfList);
+            data.remove(entryOfList);
+            addManyEntries(entryOfList, cluster);
+        }
     }
 }
