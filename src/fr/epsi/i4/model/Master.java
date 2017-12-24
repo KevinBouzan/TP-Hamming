@@ -5,6 +5,7 @@ import java.util.List;
 
 /**
  * Classe qui représente l'ensemble des clusters et données
+ *
  * @author kbouzan
  */
 public class Master {
@@ -13,7 +14,7 @@ public class Master {
      * Liste de cluster
      */
     private List<Cluster> clusters;
-    
+
     /**
      * Liste de données utilisé pour remplir les clusters
      */
@@ -62,6 +63,7 @@ public class Master {
 
     /**
      * Retourne le premier cluster vide
+     *
      * @return premier cluster vide sinon le premier cluster de la liste
      */
     public Cluster getFirstEmptyCluster() {
@@ -73,7 +75,7 @@ public class Master {
 
         return clusters.get(0);
     }
-    
+
     public void displayDistances() {
         for (int i = 0; i < data.size(); i++) {
             for (int j = i + 1; j < data.size(); j++) {
@@ -84,7 +86,8 @@ public class Master {
 
     /**
      * Repartition des données au sein des n clusters
-     * @param n 
+     *
+     * @param n
      */
     public void dispatch(int n) {
         for (int i = 0; i < n; i++) {
@@ -94,10 +97,10 @@ public class Master {
         boolean trouve;
         Entry entryResult;
         Entry entry;
-        
+
         // compteur pour éviter les boucle infini
         int count = 0;
-        
+
         // max que le compteur peut atteindre
         int max = data.size();
         Cluster cluster = null;
@@ -112,6 +115,10 @@ public class Master {
             if (cluster.isEmpty()) {
                 cluster.addEntry(entry);
                 data.remove(entry);
+                for (Entry entryOne : getEntryDistanceOne(entry)) {
+                    cluster.addEntry(entryOne);
+                    data.remove(entryOne);
+                }
             } else {
                 // on boucle pour tous les clusters
                 while (i < clusters.size() && !trouve) {
@@ -135,8 +142,9 @@ public class Master {
                         data.add(entryResult);
                         count++;
                     } else {
+                        entry.clusterWithMin(clusters).addEntry(data.get(0));
                         System.out.println("La données " + data.get(0).toString() + " peut s'inserer dans n'importe quel cluster");
-                        getFirstEmptyCluster().addEntry(data.get(0));
+//                        getFirstEmptyCluster().addEntry(data.get(0));
                         data.remove(0);
                     }
                 }
@@ -152,8 +160,8 @@ public class Master {
     }
 
     /**
-     * Repartition des données au sein des clusters. Il crée un nouveau cluster lorsque c'est necessaire
-     * @param n 
+     * Repartition des données au sein des clusters. Il crée un nouveau cluster
+     * lorsque c'est necessaire
      */
     public void dispatch() {
         clusters.add(new Cluster());
@@ -167,11 +175,9 @@ public class Master {
         int dist;
         int count = 0;
         int max = data.size();
-        List<Entry> listEntryOneDistance;
         Cluster cluster = null;
 
         while (!data.isEmpty()) {
-            listEntryOneDistance = null;
             i = 0;
             dist = 0;
             trouve = false;
@@ -180,6 +186,10 @@ public class Master {
             if (cluster.isEmpty()) {
                 cluster.addEntry(entry);
                 data.remove(entry);
+                for (Entry entryOne : getEntryDistanceOne(entry)) {
+                    cluster.addEntry(entryOne);
+                    data.remove(entryOne);
+                }
             } else {
                 while (i < clusters.size() && !trouve) {
                     entryResult = entry.checkDistanceWithClusters(clusters.get(i), clusters);
@@ -191,9 +201,13 @@ public class Master {
                     i++;
                 }
                 if (!trouve) {
+                    if (data.size() > 1) {
                         entryMax = entry.getEntryToSwitch(clusters);
                         data.add(entryMax);
                         count++;
+                    } else {
+                        clusters.add(new Cluster());
+                    }
                 }
                 // Si le compteur atteint son max on crée un nouveau cluster
                 if (count == max) {
@@ -206,6 +220,7 @@ public class Master {
 
     /**
      * Retourne le premier élément de la liste de données
+     *
      * @return premier Entry de data
      */
     public Entry getFirstEntry() {
@@ -215,5 +230,14 @@ public class Master {
         }
         return result;
     }
-    
+
+    public List<Entry> getEntryDistanceOne(Entry entry) {
+        List<Entry> listEntry = new ArrayList<>();
+        for (Entry entryOfList : data) {
+            if (entry.calculateDistance(entryOfList) < 2) {
+                listEntry.add(entryOfList);
+            }
+        }
+        return listEntry;
+    }
 }

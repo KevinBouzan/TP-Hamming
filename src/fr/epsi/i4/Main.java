@@ -8,8 +8,8 @@ public class Main {
     public static void main(String[] args) {
         Master master = new Master();
 
-        generateData(master);
-//        generateDataBis(master);
+//        generateData(master);
+        generateDataBis(master);
 
         master.displayDistances();
 

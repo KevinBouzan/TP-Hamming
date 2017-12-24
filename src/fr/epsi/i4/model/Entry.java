@@ -147,37 +147,48 @@ public class Entry {
      */
     public Entry getEntryToSwitch(List<Cluster> clusters) {
         float moy = 0;
-        int ecart = 0;
-        int ecartTemp = 0;
+        float ecart = 0;
         DistanceEntry resMin = null;
         DistanceEntry resMax = null;
+        Entry res = null;
         Cluster clusterDataRemove = null;
         for (Cluster clusterOfList : clusters) {
-            
-            // Calcul de l'ecart type
-            // S'il est plus grand que celui enregistré on calcule sa moyenne
-            ecartTemp = getMaximumDistanceWithCluster(clusterOfList).getDistance() - getMinimumDistanceWithCluster(clusterOfList).getDistance();
-            if (ecartTemp >= ecart) {
-                resMin = getMinimumDistanceWithCluster(clusterOfList);
-                resMax = getMaximumDistanceWithCluster(clusterOfList);
-                clusterDataRemove = clusterOfList;
-                ecart = ecartTemp;
-                moy = 0;
-                for (Entry entry : clusterOfList.getData()) {
-                    moy += calculateDistance(entry);
+            resMin = getMinimumDistanceWithCluster(clusterOfList);
+            resMax = getMaximumDistanceWithCluster(clusterOfList);
+            moy = 0;
+            for (Entry entry : clusterOfList.getData()) {
+                moy += calculateDistance(entry);
+            }
+            moy /= clusterOfList.getData().size();
+            if ((resMax.getDistance() - moy) > Math.abs((resMin.getDistance() - moy))) {
+                if ((resMax.getDistance() - moy) > ecart){
+                    res = resMax.getEntry();
+                    clusterDataRemove = clusterOfList;
+                    ecart = resMax.getDistance() - moy;
+                } 
+            } else {
+                if (Math.abs((resMin.getDistance() - moy)) > ecart){
+                    res = resMin.getEntry();
+                    clusterDataRemove = clusterOfList;
+                    ecart = Math.abs((resMin.getDistance() - moy));
                 }
-                moy /= clusterOfList.getData().size();
             }
         }
-        
-        // afin de savoir si c'est le maximum ou le minimum qui pose problème on soustrait la moyenne à ces deux valeur. La plus grande valeur est donc celle la plus eloigné de la moyenne et donc celle su'il faut retirer
-        // la moyenne est arrondi puisqu'il ne peut pas y avoir un demi attribut de difference.
-        if((resMax.getDistance() - Math.round(moy)) > (resMin.getDistance() - Math.round(moy))){
-            clusterDataRemove.getData().remove(resMax.getEntry());
-            return resMax.getEntry();
-        } else {
-            clusterDataRemove.getData().remove(resMin.getEntry());
-            return resMin.getEntry();
+        clusterDataRemove.getData().remove(res);
+        return res;
+    }
+    
+    public Cluster clusterWithMin(List<Cluster> clusters){
+        Cluster res = clusters.get(0);
+        int min = 1000;
+        int distance = 0;
+        for (Cluster cluster : clusters){
+            distance = getMinimumDistanceWithCluster(cluster).getDistance();
+            if (distance < min){
+                res = cluster;
+                min = distance;
+            }
         }
+        return res;
     }
 }
