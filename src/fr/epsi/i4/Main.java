@@ -1,5 +1,6 @@
 package fr.epsi.i4;
 
+import fr.epsi.i4.model.Cluster;
 import fr.epsi.i4.model.Entry;
 import fr.epsi.i4.model.Master;
 
@@ -8,15 +9,34 @@ public class Main {
     public static void main(String[] args) {
         Master master = new Master();
 
-//        generateData(master);
-        generateDataBis(master);
+        generateData(master);
+//        generateDataBis(master);
 
         master.displayDistances();
 
-        master.dispatch(2);
-//        master.dispatch();
+        master.generateDistancesMatrix();
+        int i = 0;
+        while (i < master.getClustersTemp().size()) {
+            if (!master.preselect(master.getClustersTemp().get(i))) {
+                i++;
+            }
+        }
+//        System.out.println(master.printTemp());
 
-        System.out.println(master.toString());
+//        while(master.getClustersTemp().size() > 3){
+//            master.merge();
+//            System.out.println(master.printTemp());
+//        }
+//        
+//        master.cleanCluster();
+        master.dispatchOpti(3);
+        System.out.println(master.printTemp());
+
+        master.printDistance();
+
+//        master.dispatch(3);
+//        master.dispatch();
+//        System.out.println(master.toString());
     }
 
     public static void generateData(Master master) {

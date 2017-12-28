@@ -156,10 +156,14 @@ public class Entry {
             resMin = getMinimumDistanceWithCluster(clusterOfList);
             resMax = getMaximumDistanceWithCluster(clusterOfList);
             moy = 0;
+            //Calcul de la moyenne des distance dans le cluster
             for (Entry entry : clusterOfList.getData()) {
                 moy += calculateDistance(entry);
             }
             moy /= clusterOfList.getData().size();
+            
+            // Avec la moyenne on peut alors savoir si c'est le min ou le max qui pose problème
+            // Enfini il faut verifier que l'ecart calculer est supérieur au precedent afin de choisir l'entry qui pose le plus de problème à l'insertion de la donnée
             if ((resMax.getDistance() - moy) > Math.abs((resMin.getDistance() - moy))) {
                 if ((resMax.getDistance() - moy) > ecart){
                     res = resMax.getEntry();
@@ -174,10 +178,17 @@ public class Entry {
                 }
             }
         }
+        
+        // On supprime l'entry génante du cluster puis on la retourne pour qu'elle soit traiter à nouveau
         clusterDataRemove.getData().remove(res);
         return res;
     }
     
+    /**
+     * Retourne le cluster qui a une distance minimum avec l'entry
+     * @param clusters
+     * @return cluster minimum distance
+     */
     public Cluster clusterWithMin(List<Cluster> clusters){
         Cluster res = clusters.get(0);
         int min = 1000;

@@ -1,6 +1,7 @@
 package fr.epsi.i4.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -15,6 +16,10 @@ public class Master {
      */
     private List<Cluster> clusters;
 
+    private List<Cluster> clustersTemp;
+
+    private int[][] distances;
+
     /**
      * Liste de données utilisé pour remplir les clusters
      */
@@ -23,10 +28,98 @@ public class Master {
     public Master() {
         clusters = new ArrayList<>();
         data = new ArrayList<>();
+        clustersTemp = new ArrayList<>();
+    }
+
+    public void generateDistancesMatrix() {
+        distances = new int[data.size()][data.size()];
+        for (int i = 0; i < data.size(); i++) {
+            for (int j = 0; j < data.size(); j++) {
+                distances[i][j] = data.get(i).calculateDistance(data.get(j));
+            }
+        }
+        generateClusterTemp();
+    }
+
+    public void generateClusterTemp() {
+        for (int i = 0; i < data.size(); i++) {
+            clustersTemp.add(new Cluster());
+            for (int j = 0; j < data.size(); j++) {
+                if (distances[i][j] < 2) {
+                    clustersTemp.get(clustersTemp.size() - 1).addEntry(data.get(j));
+                }
+            }
+        }
+        System.out.println(printTemp());
+    }
+
+    public String printTemp() {
+        StringBuilder stringBuilder = new StringBuilder("Master: ");
+        for (int i = 0; i < clustersTemp.size(); i++) {
+            stringBuilder
+                    .append("\n---------------------------------")
+                    .append("\nCluster ")
+                    .append(i + 1);
+            for (Entry entry : clustersTemp.get(i).getData()) {
+                stringBuilder
+                        .append("\n")
+                        .append(entry.toString());
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public boolean preselect(Cluster cluster) {
+        int count;
+        boolean res = false;
+        int i = 0;
+        Cluster clusterTemp;
+        while (i < clustersTemp.size()) {
+            clusterTemp = clustersTemp.get(i);
+            if (clusterTemp != cluster) {
+                count = 0;
+                for (Entry entry : cluster.getData()) {
+                    if (clusterTemp.getData().contains(entry)) {
+                        count++;
+                    }
+                }
+                if (count == cluster.getData().size()) {
+                    clustersTemp.remove(cluster);
+                    res = true;
+                    i = clustersTemp.size();
+                }
+            }
+            i++;
+        }
+        return res;
+    }
+
+    public void printDistance() {
+        for (int i = 0; i < data.size(); i++) {
+            if (i == 0) {
+                System.out.print("    ");
+                for (int j = 0; j < data.size(); j++) {
+                    System.out.print(j + 1 + " | ");
+                }
+            }
+            System.out.println("");
+            System.out.print(i + 1 + " | ");
+            for (int j = 0; j < data.size(); j++) {
+                System.out.print(distances[i][j] + " | ");
+            }
+        }
     }
 
     public List<Cluster> getClusters() {
         return clusters;
+    }
+
+    public List<Cluster> getClustersTemp() {
+        return clustersTemp;
+    }
+
+    public void setClustersTemp(List<Cluster> clustersTemp) {
+        this.clustersTemp = clustersTemp;
     }
 
     public List<Entry> getData() {
@@ -115,10 +208,10 @@ public class Master {
             if (cluster.isEmpty()) {
                 cluster.addEntry(entry);
                 data.remove(entry);
-                for (Entry entryOne : getEntryDistanceOne(entry)) {
-                    cluster.addEntry(entryOne);
-                    data.remove(entryOne);
-                }
+//                for (Entry entryOne : getEntryDistanceOne(entry)) {
+//                    cluster.addEntry(entryOne);
+//                    data.remove(entryOne);
+//                }
             } else {
                 // on boucle pour tous les clusters
                 while (i < clusters.size() && !trouve) {
@@ -239,5 +332,115 @@ public class Master {
             }
         }
         return listEntry;
+    }
+
+    public ClusterDistance getMinofMax(Cluster cluster) {
+        int maxTemp, distance;
+        int max = 1000000000;
+        Cluster clusterToMerge = null;
+        Cluster clusterToMergeTemp = null;
+        for (Cluster clusterTemp : clustersTemp) {
+            if (cluster != clusterTemp) {
+                for (Entry entry : cluster.getData()) {
+                    distance = entry.getMaximumDistanceWithCluster(clusterTemp).getDistance();
+                    if (distance < max && entry != entry.getMaximumDistanceWithCluster(clusterTemp).getEntry()) {
+                        max = distance;
+                        clusterToMerge = clusterTemp;
+                    }
+                }
+            }
+        }
+        ClusterDistance res = new ClusterDistance(clusterToMerge, max);
+        return res;
+
+    }
+
+    public void merge() {
+        ClusterDistance clusterDistance = new ClusterDistance(null, 10000);
+        ClusterDistance clusterDistanceTemp = null;
+        Cluster clusterToMerge = null;
+        Cluster clusterMerge = null;
+        for (Cluster cluster : clustersTemp) {
+            clusterDistanceTemp = getMinofMax(cluster);
+            if (clusterDistance.getDistance() > clusterDistanceTemp.getDistance()) {
+                clusterToMerge = clusterDistanceTemp.getCluster();
+                clusterMerge = cluster;
+                clusterDistance.setDistance(clusterDistanceTemp.getDistance());
+            }
+        }
+        for (Entry entry : clusterToMerge.getData()) {
+            if (!clusterMerge.getData().contains(entry)) {
+                clusterMerge.addEntry(entry);
+            }
+        }
+        clustersTemp.remove(clusterToMerge);
+
+        System.out.println("merge between " + clusterToMerge.toString() + " and " + clusterMerge.toString());
+    }
+
+    public void cleanCluster() {
+        List<Cluster> clusterList;
+        int max = 0;
+        Cluster goodCluster;
+        for (Entry entry : data) {
+            clusterList = new ArrayList<>();
+            goodCluster = null;
+            for (Cluster cluster : clustersTemp) {
+                if (cluster.getData().contains(entry)) {
+                    clusterList.add(cluster);
+                }
+            }
+            if (clusterList.size() > 1) {
+                for (Cluster clusterOfList : clusterList) {
+                    if (max < entry.getMaximumDistanceWithCluster(clusterOfList).getDistance()) {
+                        if (goodCluster != null) {
+                            goodCluster.getData().remove(entry);
+                        }
+                        goodCluster = clusterOfList;
+                    } else {
+                        clusterOfList.getData().remove(entry);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void cleanCluster2() {
+        List<Cluster> clusterList;
+        int max = 100000;
+        Cluster goodCluster;
+        for (Entry entry : data) {
+            max = 100000;
+            clusterList = new ArrayList<>();
+            goodCluster = null;
+            for (Cluster cluster : clustersTemp) {
+                if (cluster.getData().contains(entry)) {
+                    clusterList.add(cluster);
+                }
+            }
+            if (clusterList.size() > 1) {
+                for (Cluster clusterOfList : clusterList) {
+                    if (max > entry.getMaximumDistanceWithCluster(clusterOfList).getDistance()) {
+                        if (goodCluster != null) {
+                            goodCluster.getData().remove(entry);
+                        }
+                        max = entry.getMaximumDistanceWithCluster(clusterOfList).getDistance();
+                        goodCluster = clusterOfList;
+                    } else {
+                        clusterOfList.getData().remove(entry);
+                    }
+                }
+            }
+        }
+    }
+    
+    public void dispatchOpti(int n){
+        while(clustersTemp.size() > n){
+            merge();
+            System.out.println("----------- Merge -----------");
+            System.out.println(printTemp());
+        }
+//        System.out.println(printTemp());
+        cleanCluster2();
     }
 }
