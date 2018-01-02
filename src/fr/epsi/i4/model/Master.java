@@ -249,7 +249,7 @@ public class Master {
             if (clusterList.size() > 1) {
                 for (Cluster clusterOfList : clusterList) {
                     distance = entry.getMaximumDistanceWithCluster(clusterOfList).getDistance();
-                    if (max > distance) {
+                    if (max >= distance) {
                         if (goodCluster != null) {
                             goodCluster.getData().remove(entry);
                         }
@@ -265,24 +265,22 @@ public class Master {
 
     /**
      * Range les éléments dans les cluster. Génère n clusters
-     *
-     * @param n
      */
-    public void dispatch() {
+    public long dispatch() {
         Scanner input = new Scanner(System.in);
         System.out.println("Combien de cluster souhaitez vous ?");
         String choice = input.next();
-
+        long time = System.currentTimeMillis();
         try {
             int n = Integer.valueOf(choice);
 
             generateClusterTemp();
-            int i = 0;
-            while (i < clusters.size()) {
-                if (!preselect(clusters.get(i))) {
-                    i++;
-                }
-            }
+//            int i = 0;
+//            while (i < clusters.size()) {
+//                if (!preselect(clusters.get(i))) {
+//                    i++;
+//                }
+//            }
             while (clusters.size() > n) {
                 merge();
             }
@@ -291,8 +289,9 @@ public class Master {
             System.out.println("Saisir un nombre !");
             dispatch();
         }
+        return System.currentTimeMillis() - time;
     }
-    
+
     public void readFile() {
         List<Entry> dataTemp = data;
         try {
