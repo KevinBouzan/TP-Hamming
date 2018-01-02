@@ -1,42 +1,36 @@
 package fr.epsi.i4;
 
-import fr.epsi.i4.model.Cluster;
 import fr.epsi.i4.model.Entry;
 import fr.epsi.i4.model.Master;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Master master = new Master();
 
-        generateData(master);
+//        generateData(master);
+        master.readFile();
 //        generateDataBis(master);
 
-        master.displayDistances();
-
         master.generateDistancesMatrix();
-        int i = 0;
-        while (i < master.getClustersTemp().size()) {
-            if (!master.preselect(master.getClustersTemp().get(i))) {
-                i++;
-            }
-        }
-//        System.out.println(master.printTemp());
-
-//        while(master.getClustersTemp().size() > 3){
-//            master.merge();
-//            System.out.println(master.printTemp());
-//        }
-//        
-//        master.cleanCluster();
-        master.dispatchOpti(3);
-        System.out.println(master.printTemp());
-
+        
         master.printDistance();
-
-//        master.dispatch(3);
-//        master.dispatch();
-//        System.out.println(master.toString());
+        System.out.println("");
+        
+        master.dispatch();
+        System.out.println(master.print());
+        
+        Scanner input = new Scanner(System.in);
+        System.out.println("\nEntrer n'importe quel caractère pour quitter");
+        String choice = input.next();
     }
 
     public static void generateData(Master master) {

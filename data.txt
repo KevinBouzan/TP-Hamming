@@ -1,0 +1,10 @@
+Entry{id=1, params=[0, 2, 2, 0]}
+Entry{id=2, params=[0, 1, 2, 0]}
+Entry{id=3, params=[1, 2, 2, 0]}
+Entry{id=4, params=[0, 2, 1, 0]}
+Entry{id=5, params=[0, 2, 2, 1]}
+Entry{id=6, params=[0, 1, 1, 1]}
+Entry{id=7, params=[1, 2, 2, 1]}
+Entry{id=8, params=[1, 1, 1, 0]}
+Entry{id=9, params=[1, 1, 1, 1]}
+Entry{id=10, params=[1, 2, 1, 1]}

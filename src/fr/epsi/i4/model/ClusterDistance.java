@@ -6,7 +6,7 @@
 package fr.epsi.i4.model;
 
 /**
- *
+ * Classe utilisé pour connaitre la distance maximum avec un cluster
  * @author kbouzan
  */
 public class ClusterDistance {

@@ -1,8 +1,15 @@
 package fr.epsi.i4.model;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * Classe qui représente l'ensemble des clusters et données
@@ -16,8 +23,9 @@ public class Master {
      */
     private List<Cluster> clusters;
 
-    private List<Cluster> clustersTemp;
-
+    /**
+     * Matrice des distances
+     */
     private int[][] distances;
 
     /**
@@ -26,11 +34,13 @@ public class Master {
     private List<Entry> data;
 
     public Master() {
-        clusters = new ArrayList<>();
         data = new ArrayList<>();
-        clustersTemp = new ArrayList<>();
+        clusters = new ArrayList<>();
     }
 
+    /**
+     * Génère la matrice des distances
+     */
     public void generateDistancesMatrix() {
         distances = new int[data.size()][data.size()];
         for (int i = 0; i < data.size(); i++) {
@@ -38,29 +48,37 @@ public class Master {
                 distances[i][j] = data.get(i).calculateDistance(data.get(j));
             }
         }
-        generateClusterTemp();
     }
 
+    /**
+     * Génère les premier cluster qui seront ensuite fusionné. Chaque cluster
+     * est composé d'un élément et de tout les éléments qui sont à une distance
+     * inferieure à 2
+     */
     public void generateClusterTemp() {
         for (int i = 0; i < data.size(); i++) {
-            clustersTemp.add(new Cluster());
+            clusters.add(new Cluster());
             for (int j = 0; j < data.size(); j++) {
                 if (distances[i][j] < 2) {
-                    clustersTemp.get(clustersTemp.size() - 1).addEntry(data.get(j));
+                    clusters.get(clusters.size() - 1).addEntry(data.get(j));
                 }
             }
         }
-        System.out.println(printTemp());
     }
 
-    public String printTemp() {
+    /**
+     * Affiche les cluster
+     *
+     * @return clusters
+     */
+    public String print() {
         StringBuilder stringBuilder = new StringBuilder("Master: ");
-        for (int i = 0; i < clustersTemp.size(); i++) {
+        for (int i = 0; i < clusters.size(); i++) {
             stringBuilder
                     .append("\n---------------------------------")
                     .append("\nCluster ")
                     .append(i + 1);
-            for (Entry entry : clustersTemp.get(i).getData()) {
+            for (Entry entry : clusters.get(i).getData()) {
                 stringBuilder
                         .append("\n")
                         .append(entry.toString());
@@ -69,13 +87,20 @@ public class Master {
         return stringBuilder.toString();
     }
 
+    /**
+     * Effectue un nettoyage du cluster. Si celui ci est entierement compris
+     * dans un autre alors il est supprimé
+     *
+     * @param cluster
+     * @return boolean supprimé
+     */
     public boolean preselect(Cluster cluster) {
         int count;
         boolean res = false;
         int i = 0;
         Cluster clusterTemp;
-        while (i < clustersTemp.size()) {
-            clusterTemp = clustersTemp.get(i);
+        while (i < clusters.size()) {
+            clusterTemp = clusters.get(i);
             if (clusterTemp != cluster) {
                 count = 0;
                 for (Entry entry : cluster.getData()) {
@@ -84,9 +109,9 @@ public class Master {
                     }
                 }
                 if (count == cluster.getData().size()) {
-                    clustersTemp.remove(cluster);
+                    clusters.remove(cluster);
                     res = true;
-                    i = clustersTemp.size();
+                    i = clusters.size();
                 }
             }
             i++;
@@ -94,6 +119,9 @@ public class Master {
         return res;
     }
 
+    /**
+     * Affiche la matrice de distances
+     */
     public void printDistance() {
         for (int i = 0; i < data.size(); i++) {
             if (i == 0) {
@@ -112,14 +140,6 @@ public class Master {
 
     public List<Cluster> getClusters() {
         return clusters;
-    }
-
-    public List<Cluster> getClustersTemp() {
-        return clustersTemp;
-    }
-
-    public void setClustersTemp(List<Cluster> clustersTemp) {
-        this.clustersTemp = clustersTemp;
     }
 
     public List<Entry> getData() {
@@ -155,191 +175,17 @@ public class Master {
     }
 
     /**
-     * Retourne le premier cluster vide
+     * Récupère le cluster qui possède la distance maximale la plus proche du
+     * cluster passé en paramètre
      *
-     * @return premier cluster vide sinon le premier cluster de la liste
+     * @param cluster
+     * @return cluster et distance max
      */
-    public Cluster getFirstEmptyCluster() {
-        for (Cluster c : clusters) {
-            if (c.isEmpty()) {
-                return c;
-            }
-        }
-
-        return clusters.get(0);
-    }
-
-    public void displayDistances() {
-        for (int i = 0; i < data.size(); i++) {
-            for (int j = i + 1; j < data.size(); j++) {
-                System.out.println("Distance between " + data.get(i).getId() + " and " + data.get(j).getId() + " : " + data.get(i).calculateDistance(data.get(j)));
-            }
-        }
-    }
-
-    /**
-     * Repartition des données au sein des n clusters
-     *
-     * @param n
-     */
-    public void dispatch(int n) {
-        for (int i = 0; i < n; i++) {
-            clusters.add(new Cluster());
-        }
-        int i;
-        boolean trouve;
-        Entry entryResult;
-        Entry entry;
-
-        // compteur pour éviter les boucle infini
-        int count = 0;
-
-        // max que le compteur peut atteindre
-        int max = data.size();
-        Cluster cluster = null;
-
-        // on boucle tant qu'il y a des données dans la liste data
-        while (!data.isEmpty()) {
-            i = 0;
-            trouve = false;
-            entry = getFirstEntry();
-            cluster = getFirstEmptyCluster();
-            // Si on récupère un cluster vide alors on ajoute la données
-            if (cluster.isEmpty()) {
-                cluster.addEntry(entry);
-                data.remove(entry);
-//                for (Entry entryOne : getEntryDistanceOne(entry)) {
-//                    cluster.addEntry(entryOne);
-//                    data.remove(entryOne);
-//                }
-            } else {
-                // on boucle pour tous les clusters
-                while (i < clusters.size() && !trouve) {
-                    // On vérifie si la donnée doit être inséré dans le cluster
-                    entryResult = entry.checkDistanceWithClusters(clusters.get(i), clusters);
-                    // Si le resultat est egal à l'entry alors c'est le bon cluster.
-                    // On ajoute l'entry dans le cluster et on le supprime de la liste data
-                    if (entryResult == entry) {
-                        clusters.get(i).addEntry(entry);
-                        data.remove(entry);
-                        trouve = true;
-                    }
-                    i++;
-                }
-                // Si aucune place n'a été trouvé
-                if (!trouve) {
-                    // Si c'est le dernier élément de la liste c'est donc qu'il peut être inséré dans n'importe quel cluster. Alors on l'insère dans le premier
-                    // Si ce n'est pas le dernier on récupère l'entry qui l'empeche d'être inséreé et on la remet dans la liste des data
-                    if (data.size() > 1) {
-                        entryResult = entry.getEntryToSwitch(clusters);
-                        data.add(entryResult);
-                        count++;
-                    } else {
-                        entry.clusterWithMin(clusters).addEntry(data.get(0));
-                        System.out.println("La données " + data.get(0).toString() + " peut s'inserer dans n'importe quel cluster");
-//                        getFirstEmptyCluster().addEntry(data.get(0));
-                        data.remove(0);
-                    }
-                }
-                // Quand le compteur atteint le max alors on insère la valeur dans le premier cluster. 
-                if (count == max) {
-                    System.out.println("La données " + data.get(data.size() - 1).toString() + "  ne peut pas être inséré dans un des " + n + " clusters. Elle est donc inséré dans le premier cluster");
-                    getFirstEmptyCluster().addEntry(data.get(data.size() - 1));
-                    data.remove(data.size() - 1);
-                    count = 0;
-                }
-            }
-        }
-    }
-
-    /**
-     * Repartition des données au sein des clusters. Il crée un nouveau cluster
-     * lorsque c'est necessaire
-     */
-    public void dispatch() {
-        clusters.add(new Cluster());
-        clusters.add(new Cluster());
-        int i;
-        boolean trouve;
-        Entry entryResult;
-        Entry entryMax = null;
-        Entry entry;
-        Cluster clusterMax = null;
-        int dist;
-        int count = 0;
-        int max = data.size();
-        Cluster cluster = null;
-
-        while (!data.isEmpty()) {
-            i = 0;
-            dist = 0;
-            trouve = false;
-            entry = getFirstEntry();
-            cluster = getFirstEmptyCluster();
-            if (cluster.isEmpty()) {
-                cluster.addEntry(entry);
-                data.remove(entry);
-                for (Entry entryOne : getEntryDistanceOne(entry)) {
-                    cluster.addEntry(entryOne);
-                    data.remove(entryOne);
-                }
-            } else {
-                while (i < clusters.size() && !trouve) {
-                    entryResult = entry.checkDistanceWithClusters(clusters.get(i), clusters);
-                    if (entryResult == entry) {
-                        clusters.get(i).addEntry(entry);
-                        data.remove(entry);
-                        trouve = true;
-                    }
-                    i++;
-                }
-                if (!trouve) {
-                    if (data.size() > 1) {
-                        entryMax = entry.getEntryToSwitch(clusters);
-                        data.add(entryMax);
-                        count++;
-                    } else {
-                        clusters.add(new Cluster());
-                    }
-                }
-                // Si le compteur atteint son max on crée un nouveau cluster
-                if (count == max) {
-                    clusters.add(new Cluster());
-                    count = 0;
-                }
-            }
-        }
-    }
-
-    /**
-     * Retourne le premier élément de la liste de données
-     *
-     * @return premier Entry de data
-     */
-    public Entry getFirstEntry() {
-        Entry result = null;
-        if (!data.isEmpty()) {
-            result = data.get(0);
-        }
-        return result;
-    }
-
-    public List<Entry> getEntryDistanceOne(Entry entry) {
-        List<Entry> listEntry = new ArrayList<>();
-        for (Entry entryOfList : data) {
-            if (entry.calculateDistance(entryOfList) < 2) {
-                listEntry.add(entryOfList);
-            }
-        }
-        return listEntry;
-    }
-
     public ClusterDistance getMinofMax(Cluster cluster) {
-        int maxTemp, distance;
+        int distance;
         int max = 1000000000;
         Cluster clusterToMerge = null;
-        Cluster clusterToMergeTemp = null;
-        for (Cluster clusterTemp : clustersTemp) {
+        for (Cluster clusterTemp : clusters) {
             if (cluster != clusterTemp) {
                 for (Entry entry : cluster.getData()) {
                     distance = entry.getMaximumDistanceWithCluster(clusterTemp).getDistance();
@@ -355,12 +201,17 @@ public class Master {
 
     }
 
+    /**
+     * Merge les deux clusters les plus proche grâce à la fonction getMinOfMax.
+     * Effectue le merge uniquement pour les deux plus proche. Puis supprime le
+     * cluster merger
+     */
     public void merge() {
         ClusterDistance clusterDistance = new ClusterDistance(null, 10000);
         ClusterDistance clusterDistanceTemp = null;
         Cluster clusterToMerge = null;
         Cluster clusterMerge = null;
-        for (Cluster cluster : clustersTemp) {
+        for (Cluster cluster : clusters) {
             clusterDistanceTemp = getMinofMax(cluster);
             if (clusterDistance.getDistance() > clusterDistanceTemp.getDistance()) {
                 clusterToMerge = clusterDistanceTemp.getCluster();
@@ -373,58 +224,36 @@ public class Master {
                 clusterMerge.addEntry(entry);
             }
         }
-        clustersTemp.remove(clusterToMerge);
-
-        System.out.println("merge between " + clusterToMerge.toString() + " and " + clusterMerge.toString());
+        clusters.remove(clusterToMerge);
     }
 
+    /**
+     * Supprime les entry en doublons dans les cluster restant en verifiant de
+     * garder l'entry dans le cluster ou sa distance maximale est la plus petite
+     * possible
+     */
     public void cleanCluster() {
-        List<Cluster> clusterList;
-        int max = 0;
-        Cluster goodCluster;
-        for (Entry entry : data) {
-            clusterList = new ArrayList<>();
-            goodCluster = null;
-            for (Cluster cluster : clustersTemp) {
-                if (cluster.getData().contains(entry)) {
-                    clusterList.add(cluster);
-                }
-            }
-            if (clusterList.size() > 1) {
-                for (Cluster clusterOfList : clusterList) {
-                    if (max < entry.getMaximumDistanceWithCluster(clusterOfList).getDistance()) {
-                        if (goodCluster != null) {
-                            goodCluster.getData().remove(entry);
-                        }
-                        goodCluster = clusterOfList;
-                    } else {
-                        clusterOfList.getData().remove(entry);
-                    }
-                }
-            }
-        }
-    }
-    
-    public void cleanCluster2() {
         List<Cluster> clusterList;
         int max = 100000;
         Cluster goodCluster;
+        int distance;
         for (Entry entry : data) {
             max = 100000;
             clusterList = new ArrayList<>();
             goodCluster = null;
-            for (Cluster cluster : clustersTemp) {
+            for (Cluster cluster : clusters) {
                 if (cluster.getData().contains(entry)) {
                     clusterList.add(cluster);
                 }
             }
             if (clusterList.size() > 1) {
                 for (Cluster clusterOfList : clusterList) {
-                    if (max > entry.getMaximumDistanceWithCluster(clusterOfList).getDistance()) {
+                    distance = entry.getMaximumDistanceWithCluster(clusterOfList).getDistance();
+                    if (max > distance) {
                         if (goodCluster != null) {
                             goodCluster.getData().remove(entry);
                         }
-                        max = entry.getMaximumDistanceWithCluster(clusterOfList).getDistance();
+                        max = distance;
                         goodCluster = clusterOfList;
                     } else {
                         clusterOfList.getData().remove(entry);
@@ -433,14 +262,53 @@ public class Master {
             }
         }
     }
-    
-    public void dispatchOpti(int n){
-        while(clustersTemp.size() > n){
-            merge();
-            System.out.println("----------- Merge -----------");
-            System.out.println(printTemp());
+
+    /**
+     * Range les éléments dans les cluster. Génère n clusters
+     *
+     * @param n
+     */
+    public void dispatch() {
+        Scanner input = new Scanner(System.in);
+        System.out.println("Combien de cluster souhaitez vous ?");
+        String choice = input.next();
+
+        try {
+            int n = Integer.valueOf(choice);
+
+            generateClusterTemp();
+            int i = 0;
+            while (i < clusters.size()) {
+                if (!preselect(clusters.get(i))) {
+                    i++;
+                }
+            }
+            while (clusters.size() > n) {
+                merge();
+            }
+            cleanCluster();
+        } catch (NumberFormatException e) {
+            System.out.println("Saisir un nombre !");
+            dispatch();
         }
-//        System.out.println(printTemp());
-        cleanCluster2();
+    }
+    
+    public void readFile() {
+        List<Entry> dataTemp = data;
+        try {
+            File f = new File("data.txt");
+            BufferedReader b = new BufferedReader(new FileReader(f));
+            String readLine = "";
+            data = new ArrayList<>();
+            while ((readLine = b.readLine()) != null) {
+                Entry entry = new Entry();
+                entry.StringToObject(readLine);
+                this.data.add(entry);
+            }
+
+        } catch (IOException e) {
+            data = dataTemp;
+            System.out.println("Aucune données");
+        }
     }
 }

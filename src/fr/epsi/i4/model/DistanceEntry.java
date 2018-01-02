@@ -6,7 +6,7 @@
 package fr.epsi.i4.model;
 
 /**
- *
+ * Classe utilisé pour connaitre la distance avec une entry
  * @author kbouzan
  */
 public class DistanceEntry {
